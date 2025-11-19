@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Průzkum - Kofein</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .slide {
+            background: white;
+            padding: 40px;
+            margin: 30px auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .slide.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .question {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            border-left: 5px solid #3498db;
+            transition: transform 0.3s ease;
+        }
+
+        .question:hover {
+            transform: translateX(10px);
+        }
+
+        .question-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .answers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .answer-item {
+            padding: 12px 15px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .answer-item:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+            transform: scale(1.02);
+        }
+
+        .answer-item.selected {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            height: 350px;
+        }
+
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #219a52 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .thank-you {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .thank-you h2 {
+            color: #27ae60;
+            border-bottom: none;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .thank-you p {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .new-response-notification {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .live-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="live-counter" id="liveCounter">
+        Online: <span id="onlineCount">1</span>
+    </div>
+
+    <div class="container">
+        <!-- Slajd 1 -->
+        <div class="slide active" id="slide1">
+            <h1>KOFEIN</h1>
+            <div id="newResponseNotification" class="new-response-notification" style="display: none;">
+                Nový respondent právě dokončil dotazník!
+            </div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalResponses">54</div>
+                    <div class="stat-label">CELKEM ODPOVĚDÍ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="consumesCount">48</div>
+                    <div class="stat-label">KONZUMUJE KOFEIN</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">76%</div>
+                    <div class="stat-label">PRO ENERGII</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">36%</div>
+                    <div class="stat-label">CÍTÍ ZÁVISLOST</div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="btn btn-primary" onclick="showSlide(2)">Vyplnit Dotazník</button>
+                <button class="btn btn-secondary" onclick="showSlide(3)">Zobrazit Grafy</button>
+            </div>
+        </div>
+
+        <!-- Slajd 2 - Dotazník -->
+        <div class="slide" id="slide2">
+            <h2>Dotazník - Vztah ke kofeinu</h2>
+            <div class="progress-bar">
+                <div class="progress" id="surveyProgress" style="width: 0%"></div>
+            </div>
+
+            <form id="surveyForm">
+                <!-- Otázka 1 -->
+                <div class="question">
+                    <div class="question-title">1. Pohlaví</div>
+                    <div class="answers">
+                        <label class="answer-item">
+                            <input type="radio" name="gender" value="Muž" onchange="updateProgress()"> Muž
+                        </label>
+                        <label class="answer-item">
+                            <input type="radio" name="gender" value="Žena" onchange="updateProgress()"> Žena
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Otázka 2 -->
+                <div class="question">
+                    <div class="question-title">2. Věk</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="age" value="0-17" onchange="updateProgress()"> 0-17 let</label>
+                        <label class="answer-item"><input type="radio" name="age" value="18-24" onchange="updateProgress()"> 18-24 let</label>
+                        <label class="answer-item"><input type="radio" name="age" value="25-34" onchange="updateProgress()"> 25-34 let</label>
+                        <label class="answer-item"><input type="radio" name="age" value="35-44" onchange="updateProgress()"> 35-44 let</label>
+                        <label class="answer-item"><input type="radio" name="age" value="45-54" onchange="updateProgress()"> 45-54 let</label>
+                        <label class="answer-item"><input type="radio" name="age" value="55+" onchange="updateProgress()"> 55 a více let</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 3 -->
+                <div class="question">
+                    <div class="question-title">3. Konzumujete nápoje s obsahem kofeinu (káva, čaj, kola, energetické nápoje)?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="consumes" value="Ano" onchange="updateProgress()"> Ano</label>
+                        <label class="answer-item"><input type="radio" name="consumes" value="Ne" onchange="updateProgress()"> Ne</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 4 -->
+                <div class="question">
+                    <div class="question-title">4. Kolik šálků kávy (nebo jiných kofeinových nápojů) vypijete za den?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="cups" value="0" onchange="updateProgress()"> 0</label>
+                        <label class="answer-item"><input type="radio" name="cups" value="1-2" onchange="updateProgress()"> 1-2</label>
+                        <label class="answer-item"><input type="radio" name="cups" value="3-4" onchange="updateProgress()"> 3-4</label>
+                        <label class="answer-item"><input type="radio" name="cups" value="5+" onchange="updateProgress()"> 5 a více</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 5 -->
+                <div class="question">
+                    <div class="question-title">5. V jakou denní dobu konzumujete kofein nejčastěji?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="time" value="Ráno" onchange="updateProgress()"> Ráno</label>
+                        <label class="answer-item"><input type="radio" name="time" value="Odpoledne" onchange="updateProgress()"> Odpoledne</label>
+                        <label class="answer-item"><input type="radio" name="time" value="Večer" onchange="updateProgress()"> Večer</label>
+                        <label class="answer-item"><input type="radio" name="time" value="Rovnoměrně" onchange="updateProgress()"> Rovnoměrně během dne</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 6 -->
+                <div class="question">
+                    <div class="question-title">6. Cítíte se na kofeinu závislí?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="addiction" value="Ano" onchange="updateProgress()"> Ano</label>
+                        <label class="answer-item"><input type="radio" name="addiction" value="Ne" onchange="updateProgress()"> Ne</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 7 -->
+                <div class="question">
+                    <div class="question-title">7. Kvůli čemu kofein nejčastěji pijete?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="reason" value="Energie" onchange="updateProgress()"> Pro povzbuzení energie</label>
+                        <label class="answer-item"><input type="radio" name="reason" value="Chuť" onchange="updateProgress()"> Kvůli chuti</label>
+                        <label class="answer-item"><input type="radio" name="reason" value="Rituál" onchange="updateProgress()"> Je to společenský rituál</label>
+                        <label class="answer-item"><input type="radio" name="reason" value="Zvyk" onchange="updateProgress()"> Zvyk</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 8 -->
+                <div class="question">
+                    <div class="question-title">8. Zažili jste někdy negativní účinky (neklid, úzkost, nespavost)?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="effects" value="Často" onchange="updateProgress()"> Ano, často</label>
+                        <label class="answer-item"><input type="radio" name="effects" value="Občas" onchange="updateProgress()"> Ano, občas</label>
+                        <label class="answer-item"><input type="radio" name="effects" value="Zřídka" onchange="updateProgress()"> Velmi zřídka</label>
+                        <label class="answer-item"><input type="radio" name="effects" value="Nikdy" onchange="updateProgress()"> Nikdy</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 9 -->
+                <div class="question">
+                    <div class="question-title">9. Omezili byste konzumaci, pokud by to pro vás bylo snadné?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="reduction" value="Ano" onchange="updateProgress()"> Ano</label>
+                        <label class="answer-item"><input type="radio" name="reduction" value="Ne" onchange="updateProgress()"> Ne</label>
+                    </div>
+                </div>
+
+                <!-- Otázka 10 -->
+                <div class="question">
+                    <div class="question-title">10. Myslíte si, že je konzumace kofeinu ve společnosti příliš normalizovaná?</div>
+                    <div class="answers">
+                        <label class="answer-item"><input type="radio" name="normalization" value="Ano" onchange="updateProgress()"> Ano</label>
+                        <label class="answer-item"><input type="radio" name="normalization" value="Ne" onchange="updateProgress()"> Ne</label>
+                        <label class="answer-item"><input type="radio" name="normalization" value="Nevím" onchange="updateProgress()"> Nevím</label>
+                    </div>
+                </div>
+
+            </form>
+
+            <div class="navigation">
+                <button class="btn btn-secondary" onclick="showSlide(1)">Zpět</button>
+                <button class="btn btn-success" onclick="submitSurvey()">Odeslat Odpovědi</button>
+            </div>
+        </div>
+
+        <!-- Slajd 3 - Grafy -->
+        <div class="slide" id="slide3">
+            <h2>Přehled Odpovědí - Grafy</h2>
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-title">1. Věková struktura respondentů</div>
+                    <canvas id="ageChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">2. Denní konzumace kofeinových nápojů</div>
+                    <canvas id="consumptionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">3. Pohlaví respondentů</div>
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">4. Závislost na kofeinu</div>
+                    <canvas id="addictionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">5. Čas konzumace kofeinu</div>
+                    <canvas id="timeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">6. Důvody konzumace kofeinu</div>
+                    <canvas id="reasonChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">7. Negativní účinky kofeinu</div>
+                    <canvas id="effectsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">8. Ochota omezit konzumaci</div>
+                    <canvas id="reductionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">9. Konzumace kofeinových nápojů</div>
+                    <canvas id="consumesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">10. Názor na normalizaci kofeinu</div>
+                    <canvas id="normalizationChart"></canvas>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="btn btn-secondary" onclick="showSlide(1)">Zpět na Úvod</button>
+                <button class="btn btn-primary" onclick="showSlide(2)">Vyplnit Dotazník</button>
+            </div>
+        </div>
+
+        <!-- Slajd 4 - Děkujeme -->
+        <div class="slide" id="slide4">
+            <div class="thank-you">
+                <h2>Děkujeme za Vaši účast!</h2>
+                <p>Vaše odpovědi byly úspěšně uloženy.</p>
+                <p>Celkem respondentů: <strong id="finalCount">54</strong></p>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="showSlide(3)">Zobrazit Grafy</button>
+                    <button class="btn btn-primary" onclick="showSlide(2)">Vyplnit Znovu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funkce pro práci s localStorage
+        function saveToStorage(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function loadFromStorage(key, defaultValue) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        }
+
+        // Počáteční data pro 54 účastníků
+        const initialData = {
+            age: { '0-17': 9, '18-24': 11, '25-34': 13, '35-44': 10, '45-54': 7, '55+': 4 },
+            consumption: { '0': 7, '1-2': 28, '3-4': 16, '5+': 3 },
+            gender: { 'Muž': 26, 'Žena': 28 },
+            addiction: { 'Ano': 20, 'Ne': 34 },
+            time: { 'Ráno': 35, 'Odpoledne': 14, 'Večer': 5, 'Rovnoměrně': 0 },
+            reason: { 'Energie': 41, 'Chuť': 24, 'Rituál': 16, 'Zvyk': 30 },
+            effects: { 'Často': 9, 'Občas': 27, 'Zřídka': 12, 'Nikdy': 6 },
+            reduction: { 'Ano': 22, 'Ne': 32 },
+            consumes: { 'Ano': 48, 'Ne': 6 },
+            normalization: { 'Ano': 29, 'Ne': 14, 'Nevím': 11 }
+        };
+
+        // Načtení dat z localStorage nebo použít počáteční data
+        let surveyData = loadFromStorage('kofeinSurveyData', initialData);
+        let totalResponses = loadFromStorage('kofeinTotalResponses', 54);
+        let onlineUsers = 1;
+
+        // Uložení počátečních dat pokud ještě neexistují
+        if (!localStorage.getItem('kofeinSurveyData')) {
+            saveToStorage('kofeinSurveyData', initialData);
+            saveToStorage('kofeinTotalResponses', 54);
+        }
+
+        // Simulace online uživatelů
+        function updateOnlineUsers() {
+            onlineUsers = 1 + Math.floor(Math.random() * 5);
+            document.getElementById('onlineCount').textContent = onlineUsers;
+        }
+
+        // Navigace mezi slajdy
+        function showSlide(slideNumber) {
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            document.getElementById('slide' + slideNumber).classList.add('active');
+            
+            if (slideNumber === 3) {
+                updateCharts();
+            }
+        }
+
+        // Progress bar
+        function updateProgress() {
+            const form = document.getElementById('surveyForm');
+            const inputs = form.querySelectorAll('input[type="radio"]:checked');
+            const progress = (inputs.length / 10) * 100;
+            document.getElementById('surveyProgress').style.width = progress + '%';
+        }
+
+        // Odeslání formuláře
+        function submitSurvey() {
+            const form = document.getElementById('surveyForm');
+            const formData = new FormData(form);
+            
+            // Kontrola, zda jsou vyplněny všechny odpovědi
+            const inputs = form.querySelectorAll('input[type="radio"]:checked');
+            if (inputs.length < 10) {
+                alert('Prosím, odpovězte na všechny otázky před odesláním.');
+                return;
+            }
+            
+            // Zvýšení počtu respondentů
+            totalResponses++;
+            
+            // Aktualizace dat s novými odpověďmi
+            for (let [question, answer] of formData.entries()) {
+                if (surveyData[question] && surveyData[question][answer] !== undefined) {
+                    surveyData[question][answer]++;
+                }
+            }
+            
+            // Uložení do localStorage
+            saveToStorage('kofeinSurveyData', surveyData);
+            saveToStorage('kofeinTotalResponses', totalResponses);
+            
+            // Aktualizace UI
+            updateUI();
+            
+            // Zobrazení notifikace
+            showNewResponseNotification();
+            
+            // Reset formuláře
+            form.reset();
+            document.getElementById('surveyProgress').style.width = '0%';
+            
+            showSlide(4);
+        }
+
+        // Aktualizace UI s aktuálními daty
+        function updateUI() {
+            document.getElementById('totalResponses').textContent = totalResponses;
+            document.getElementById('finalCount').textContent = totalResponses;
+            document.getElementById('consumesCount').textContent = surveyData.consumes.Ano;
+        }
+
+        // Zobrazení notifikace o novém respondentovi
+        function showNewResponseNotification() {
+            const notification = document.getElementById('newResponseNotification');
+            notification.style.display = 'block';
+            notification.textContent = `Nový respondent právě dokončil dotazník! Celkem: ${totalResponses}`;
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        // Aktualizace grafů
+        function updateCharts() {
+            const chartOptions = { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            };
+
+            // Věkový graf
+            new Chart(document.getElementById('ageChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(surveyData.age),
+                    datasets: [{
+                        label: 'Počet lidí',
+                        data: Object.values(surveyData.age),
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf konzumace
+            new Chart(document.getElementById('consumptionChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(surveyData.consumption),
+                    datasets: [{
+                        data: Object.values(surveyData.consumption),
+                        backgroundColor: ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf pohlaví
+            new Chart(document.getElementById('genderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(surveyData.gender),
+                    datasets: [{
+                        data: Object.values(surveyData.gender),
+                        backgroundColor: ['#3498db', '#e83e8c']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf závislosti
+            new Chart(document.getElementById('addictionChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(surveyData.addiction),
+                    datasets: [{
+                        data: Object.values(surveyData.addiction),
+                        backgroundColor: ['#e74c3c', '#2ecc71']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf času konzumace
+            new Chart(document.getElementById('timeChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(surveyData.time),
+                    datasets: [{
+                        label: 'Počet lidí',
+                        data: Object.values(surveyData.time),
+                        backgroundColor: '#9b59b6'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf důvodů
+            new Chart(document.getElementById('reasonChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(surveyData.reason),
+                    datasets: [{
+                        label: 'Počet lidí',
+                        data: Object.values(surveyData.reason),
+                        backgroundColor: '#1abc9c'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf negativních účinků
+            new Chart(document.getElementById('effectsChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(surveyData.effects),
+                    datasets: [{
+                        data: Object.values(surveyData.effects),
+                        backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf ochoty omezit
+            new Chart(document.getElementById('reductionChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(surveyData.reduction),
+                    datasets: [{
+                        data: Object.values(surveyData.reduction),
+                        backgroundColor: ['#3498db', '#e74c3c']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf konzumace ano/ne
+            new Chart(document.getElementById('consumesChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(surveyData.consumes),
+                    datasets: [{
+                        data: Object.values(surveyData.consumes),
+                        backgroundColor: ['#2ecc71', '#e74c3c']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Graf normalizace
+            new Chart(document.getElementById('normalizationChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(surveyData.normalization),
+                    datasets: [{
+                        data: Object.values(surveyData.normalization),
+                        backgroundColor: ['#e74c3c', '#2ecc71', '#95a5a6']
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // Interaktivita pro odpovědi
+        document.querySelectorAll('.answer-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    this.classList.add('selected');
+                    // Odstranit výběr u ostatních v téže otázce
+                    const question = this.closest('.question');
+                    question.querySelectorAll('.answer-item').forEach(other => {
+                        if (other !== this) {
+                            other.classList.remove('selected');
+                        }
+                    });
+                    updateProgress();
+                }
+            });
+        });
+
+        // Inicializace
+        window.onload = function() {
+            updateOnlineUsers();
+            setInterval(updateOnlineUsers, 10000); // Aktualizace každých 10 sekund
+            updateUI();
+            updateCharts();
+        };
+    </script>
+</body>
+</html>
